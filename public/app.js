@@ -594,9 +594,10 @@ async function renderEventDetail(id) {
       weatherCard.innerHTML = '';
       weatherCard.appendChild(el('h3', {}, ['Weather forecast']));
       if (!w.available) {
+        if (w.reason === 'not_configured') { weatherCard.remove(); return; }
         const msg = w.reason === 'too_far' ? 'Forecast is available within 5 days of the game.'
-          : w.reason === 'past'          ? 'This game has already taken place.'
-          :                               'Weather forecast unavailable.';
+          : w.reason === 'past'            ? 'This game has already taken place.'
+          :                                 'Weather forecast unavailable.';
         weatherCard.appendChild(el('p', { class: 'weather-note' }, [msg]));
       } else {
         const desc = w.description[0].toUpperCase() + w.description.slice(1);
