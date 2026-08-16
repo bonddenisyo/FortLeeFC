@@ -62,7 +62,13 @@ button, input, select { font-family: inherit; }
   font-size: 20px;
   color: var(--ink);
 }
-.brand__mark { color: var(--signal); }
+.brand__mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
 .topbar__nav { display: flex; gap: 18px; flex: 1; }
 .topbar__nav a {
   text-decoration: none;

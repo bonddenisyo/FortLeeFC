@@ -264,7 +264,7 @@ function renderCreateEvent() {
       el('label', {}, ['Time', el('input', { type: 'time', id: 'f-time', required: 'true' })]),
     ]),
     el('label', {}, [
-      'Capacity',
+      'Attendees',
       el('input', { type: 'number', id: 'f-capacity', min: '1', value: '20', required: 'true' }),
     ]),
     el('label', {}, [
@@ -426,7 +426,10 @@ async function geocode(query) {
 
 // ---- Event detail ----------------------------------------------------------
 
+let _detailMap = null; // kept outside so refresh() can destroy it before re-creating
+
 async function renderEventDetail(id) {
+  if (_detailMap) { try { _detailMap.remove(); } catch {} _detailMap = null; }
   app.innerHTML = '';
   const { event, signups } = await api(`/api/events/${id}`);
   const user = Session.get();
@@ -489,28 +492,32 @@ async function renderEventDetail(id) {
   app.appendChild(el('div', { class: 'detail-grid' }, [left, right]));
 
   if (event.lat && event.lng) {
-    const map = new maplibregl.Map({
-      container: 'map',
-      style: {
-        version: 8,
-        sources: {
-          osm: {
-            type: 'raster',
-            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-            tileSize: 256,
-            attribution: '&copy; OpenStreetMap contributors',
+    try {
+      _detailMap = new maplibregl.Map({
+        container: 'map',
+        style: {
+          version: 8,
+          sources: {
+            osm: {
+              type: 'raster',
+              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              attribution: '&copy; OpenStreetMap contributors',
+            },
           },
+          layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
         },
-        layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
-      },
-      center: [event.lng, event.lat],
-      zoom: 15,
-    });
-    new maplibregl.Marker()
-      .setLngLat([event.lng, event.lat])
-      .setPopup(new maplibregl.Popup().setText(event.placeName))
-      .addTo(map);
-    setTimeout(() => map.resize(), 50);
+        center: [event.lng, event.lat],
+        zoom: 15,
+      });
+      new maplibregl.Marker()
+        .setLngLat([event.lng, event.lat])
+        .setPopup(new maplibregl.Popup().setText(event.placeName))
+        .addTo(_detailMap);
+      setTimeout(() => _detailMap && _detailMap.resize(), 50);
+    } catch (err) {
+      console.warn('Map init error:', err);
+    }
   }
 
   async function refresh() {
@@ -540,6 +547,9 @@ async function renderEventDetail(id) {
       const label = mySignup.status === 'attending' ? "You're attending" : "You're on the waitlist";
       const badgeClass = mySignup.status === 'attending' ? 'badge--open' : 'badge--full';
       container.appendChild(el('span', { class: `badge ${badgeClass}` }, [label]));
+      container.appendChild(el('p', { style: 'font-size:13px;color:var(--ink-soft);margin-top:8px;' }, [
+        `${event.counts.attending} / ${event.capacity} attending · ${event.counts.spotsLeft} spots left`,
+      ]));
       container.appendChild(
         el('div', { class: 'btn-row', style: 'margin-top: 14px;' }, [
           el('button', {
@@ -548,7 +558,7 @@ async function renderEventDetail(id) {
               try {
                 await api(`/api/events/${event.id}/cancel`, { method: 'POST' });
                 toast('Cancelled your spot');
-                refresh();
+                refresh().catch((err) => toast(err.message));
               } catch (err) { toast(err.message); }
             },
           }, ['Cancel my spot']),
@@ -583,7 +593,7 @@ async function renderEventDetail(id) {
                   }),
                 });
                 toast(full ? 'Added to the waitlist' : "You're in!");
-                refresh();
+                refresh().catch((err) => toast(err.message));
               } catch (err) { toast(err.message); }
             },
           }, [full ? 'Join waitlist' : 'Sign up']),
