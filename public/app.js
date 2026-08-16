@@ -318,7 +318,7 @@ function renderCreateEvent() {
     el('label', {}, ['Title', el('input', { type: 'text', id: 'f-title', required: 'true', placeholder: 'Sunday morning trail run' })]),
     el('div', { class: 'field-row' }, [
       el('label', {}, ['Date', el('input', { type: 'date', id: 'f-date', required: 'true' })]),
-      el('label', {}, ['Time', el('input', { type: 'time', id: 'f-time', required: 'true' })]),
+      el('label', {}, ['Time', el('input', { type: 'time', id: 'f-time', required: 'true', value: '18:00' })]),
     ]),
     el('label', {}, [
       'Attendees',
@@ -526,6 +526,11 @@ async function renderEventDetail(id) {
   const rosterCard = el('div', { class: 'card' });
   renderRosterCard(rosterCard, signups);
 
+  const weatherCard = el('div', { class: 'card' }, [
+    el('h3', {}, ['Weather forecast']),
+    el('p', { class: 'weather-loading' }, ['Loading…']),
+  ]);
+
   const isHost = user && user.role === 'admin';
   const hostCard = isHost && event.status !== 'cancelled'
     ? el('div', { class: 'card' }, [
@@ -544,7 +549,7 @@ async function renderEventDetail(id) {
       ])
     : null;
 
-  const left = el('div', {}, [mapCard]);
+  const left = el('div', {}, [mapCard, weatherCard]);
   const right = el('div', {}, [...(hostCard ? [hostCard] : []), actionCard, rosterCard]);
 
   app.appendChild(head);
@@ -581,6 +586,40 @@ async function renderEventDetail(id) {
 
   async function refresh() {
     await renderEventDetail(id);
+  }
+
+  if (event.lat && event.lng) {
+    const params = new URLSearchParams({ lat: event.lat, lng: event.lng, date: event.date, time: event.time });
+    api(`/api/weather?${params}`).then(w => {
+      weatherCard.innerHTML = '';
+      weatherCard.appendChild(el('h3', {}, ['Weather forecast']));
+      if (!w.available) {
+        const msg = w.reason === 'too_far' ? 'Forecast is available within 5 days of the game.'
+          : w.reason === 'past'          ? 'This game has already taken place.'
+          :                               'Weather forecast unavailable.';
+        weatherCard.appendChild(el('p', { class: 'weather-note' }, [msg]));
+      } else {
+        const desc = w.description[0].toUpperCase() + w.description.slice(1);
+        weatherCard.appendChild(
+          el('div', { class: 'weather-data' }, [
+            el('img', { class: 'weather-icon', src: `https://openweathermap.org/img/wn/${w.icon}@2x.png`, alt: desc }),
+            el('div', { class: 'weather-main' }, [
+              el('span', { class: 'weather-temp' }, [`${w.temp}°F`]),
+              el('span', { class: 'weather-desc' }, [desc]),
+            ]),
+            el('div', { class: 'weather-details' }, [
+              el('span', {}, [`Feels like ${w.feelsLike}°F`]),
+              el('span', {}, [`💧 ${w.humidity}%`]),
+              el('span', {}, [`💨 ${w.wind} mph`]),
+            ]),
+          ])
+        );
+      }
+    }).catch(() => {
+      weatherCard.innerHTML = '';
+      weatherCard.appendChild(el('h3', {}, ['Weather forecast']));
+      weatherCard.appendChild(el('p', { class: 'weather-note' }, ['Weather unavailable.']));
+    });
   }
 
   function renderActionCard(container, event, mySignup, user) {

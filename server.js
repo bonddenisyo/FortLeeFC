@@ -76,6 +76,44 @@ app.post(
   })
 );
 
+// ---- Weather -------------------------------------------------------------
+
+app.get(
+  '/api/weather',
+  asyncRoute(async (req, res) => {
+    const { lat, lng, date, time } = req.query;
+    const apiKey = process.env.OPENWEATHER_API_KEY;
+    if (!apiKey) return res.json({ available: false, reason: 'not_configured' });
+
+    const eventMs = new Date(`${date}T${time}`).getTime();
+    const nowMs = Date.now();
+    const diffMs = eventMs - nowMs;
+
+    if (diffMs < -3 * 60 * 60 * 1000) return res.json({ available: false, reason: 'past' });
+    if (diffMs > 5 * 24 * 60 * 60 * 1000) return res.json({ available: false, reason: 'too_far' });
+
+    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${apiKey}&units=imperial&cnt=40`;
+    const r = await fetch(url);
+    if (!r.ok) throw httpError(502, 'Weather service unavailable');
+    const data = await r.json();
+
+    const eventTs = Math.round(eventMs / 1000);
+    const closest = data.list.reduce((a, b) =>
+      Math.abs(b.dt - eventTs) < Math.abs(a.dt - eventTs) ? b : a
+    );
+
+    res.json({
+      available: true,
+      temp: Math.round(closest.main.temp),
+      feelsLike: Math.round(closest.main.feels_like),
+      description: closest.weather[0].description,
+      icon: closest.weather[0].icon,
+      humidity: closest.main.humidity,
+      wind: Math.round(closest.wind.speed),
+    });
+  })
+);
+
 // ---- Users (host-only) ---------------------------------------------------
 
 app.get(
