@@ -378,7 +378,7 @@ function renderCreateEvent() {
   // Image upload widget
   const imgPreviewEl = el('img', { class: 'game-img-preview' });
   imgPreviewEl.style.display = 'none';
-  const imgPlaceholderEl = el('div', { class: 'game-img-placeholder' }, ['📷  Add a game photo']);
+  const imgPlaceholderEl = el('div', { class: 'game-img-placeholder' }, ['📷  Add a game cover']);
   const imgChangeEl = el('div', { class: 'game-img-upload__change' }, ['Change photo']);
   imgChangeEl.style.display = 'none';
   const imgFileInput = el('input', { type: 'file', accept: 'image/*' });
