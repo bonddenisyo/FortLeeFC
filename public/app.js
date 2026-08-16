@@ -720,6 +720,13 @@ async function renderEventDetail(id) {
         return `${h - 12}PM`;
       }
 
+      const { month, day } = fmtDate(event.date);
+      const first = w.hours[0].hour;
+      const last  = w.hours[w.hours.length - 1].hour;
+      weatherCard.appendChild(
+        el('p', { class: 'weather-subtitle' }, [`${month} ${day} · ${fmtHour(first)} – ${fmtHour(last)}`])
+      );
+
       const timeline = el('div', { class: 'weather-timeline' });
       w.hours.forEach(h => {
         const isGame = h.hour === w.gameHour;
