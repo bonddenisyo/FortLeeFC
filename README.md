@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Commons — a minimal Meetup clone
 
 A working prototype of the core Meetup loop: hosts create gatherings,
@@ -81,3 +82,7 @@ requires it (the code already reads `process.env.PORT`). Note free
 tiers usually mean the app "sleeps" after inactivity and the JSON file
 storage may not persist across redeploys — good enough for a demo, not
 for production data.
+=======
+# FortLeeFC
+A sign up service
+>>>>>>> 32ce6ae968ba893c79c5f129a60a50826cdb08ee
