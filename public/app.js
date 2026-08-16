@@ -909,5 +909,13 @@ function renderRegister() {
 
 // ---- Boot ----------------------------------------------------------
 
+async function refreshSession() {
+  if (!Session.get()) return;
+  try {
+    const { profile } = await api('/api/profile');
+    Session.set(profile);
+  } catch { /* 401 is handled inside api() — session already cleared */ }
+}
+
 renderIdentity();
-router();
+refreshSession().then(() => router());
