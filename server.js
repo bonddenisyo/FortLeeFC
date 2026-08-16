@@ -65,7 +65,7 @@ app.post(
   asyncRoute(async (req, res) => {
     const hostId = req.header('x-user-id');
     const host = hostId ? await db.getUser(hostId) : null;
-    if (!host || host.role !== 'host') throw httpError(403, 'Only hosts can create events');
+    if (!host || host.role !== 'admin') throw httpError(403, 'Only admins can create events');
     const { title, date, time, placeName, lat, lng, capacity, question, image } = req.body;
     if (!title || !date || !time || !placeName) throw httpError(400, 'title, date, time and placeName are required');
     const event = await db.createEvent({ title, date, time, placeName, lat, lng, capacity, question, image, hostId: host.id });
@@ -80,7 +80,7 @@ app.get(
   asyncRoute(async (req, res) => {
     const userId = req.header('x-user-id');
     const user = userId ? await db.getUser(userId) : null;
-    if (!user || user.role !== 'host') throw httpError(403, 'Hosts only');
+    if (!user || user.role !== 'admin') throw httpError(403, 'Admins only');
     res.json({ users: await db.listUsers() });
   })
 );
@@ -90,7 +90,7 @@ app.patch(
   asyncRoute(async (req, res) => {
     const userId = req.header('x-user-id');
     const user = userId ? await db.getUser(userId) : null;
-    if (!user || user.role !== 'host') throw httpError(403, 'Hosts only');
+    if (!user || user.role !== 'admin') throw httpError(403, 'Admins only');
     const { role } = req.body;
     const updated = await db.setUserRole(req.params.id, role);
     res.json({ user: updated });

@@ -62,8 +62,8 @@ function renderIdentity() {
   const btn = $('#identity-btn');
   const navNew = $('#nav-new');
   if (user) {
-    btn.textContent = `${user.name} · ${user.role === 'host' ? 'Host' : 'Attendee'}`;
-    navNew.classList.toggle('hidden', user.role !== 'host');
+    btn.textContent = `${user.name} · ${user.role === 'admin' ? 'Admin' : 'Attendee'}`;
+    navNew.classList.toggle('hidden', user.role !== 'admin');
   } else {
     btn.textContent = 'Sign in';
     navNew.classList.add('hidden');
@@ -155,7 +155,7 @@ async function renderEventsList() {
       bodyEl.appendChild(
         el('div', { class: 'empty-state' }, [
           active === 'upcoming'
-            ? (Session.get()?.role === 'host' ? 'No upcoming games. Create the first one!' : 'No upcoming games. Check back soon.')
+            ? (Session.get()?.role === 'admin' ? 'No upcoming games. Create the first one!' : 'No upcoming games. Check back soon.')
             : 'No past games yet.',
         ])
       );
@@ -219,10 +219,10 @@ function ticketCard(ev) {
 
 function renderCreateEvent() {
   const user = Session.get();
-  if (!user || user.role !== 'host') {
+  if (!user || user.role !== 'admin') {
     app.innerHTML = '';
     app.appendChild(
-      el('div', { class: 'empty-state' }, ['Sign in as a host to create a game.'])
+      el('div', { class: 'empty-state' }, ['Sign in as an admin to create a game.'])
     );
     return;
   }
@@ -467,7 +467,7 @@ async function renderEventDetail(id) {
   const rosterCard = el('div', { class: 'card' });
   renderRosterCard(rosterCard, signups);
 
-  const isHost = user && user.role === 'host';
+  const isHost = user && user.role === 'admin';
   const hostCard = isHost && event.status !== 'cancelled'
     ? el('div', { class: 'card' }, [
         el('h3', {}, ['Manage game']),
@@ -780,7 +780,7 @@ async function renderUserProfile() {
   app.appendChild(profileCard);
   app.appendChild(historyCard);
 
-  if (user.role === 'host') {
+  if (user.role === 'admin') {
     const { users } = await api('/api/users');
 
     const membersCard = el('div', { class: 'card', style: 'margin-top: 24px;' });
@@ -792,24 +792,24 @@ async function renderUserProfile() {
       const ul = el('ul', { class: 'roster member-list' });
       list.forEach((u) => {
         const isYou = u.id === user.id;
-        const isHost = u.role === 'host';
+        const isAdmin = u.role === 'admin';
         ul.appendChild(
           el('li', {}, [
             el('span', {}, [u.name, isYou ? el('span', { style: 'color:var(--ink-soft);font-size:12px;margin-left:6px;' }, ['(you)']) : '']),
             el('div', { style: 'display:flex;align-items:center;gap:8px;' }, [
-              el('span', { class: `badge ${isHost ? 'badge--host' : 'badge--open'}` }, [isHost ? 'Host' : 'Attendee']),
+              el('span', { class: `badge ${isAdmin ? 'badge--admin' : 'badge--open'}` }, [isAdmin ? 'Admin' : 'Attendee']),
               ...(!isYou ? [el('button', {
                 class: 'btn btn--ghost',
                 style: 'padding:4px 10px;font-size:12px;',
                 onclick: async () => {
                   try {
-                    const newRole = isHost ? 'user' : 'host';
+                    const newRole = isAdmin ? 'user' : 'admin';
                     await api(`/api/users/${u.id}/role`, { method: 'PATCH', body: JSON.stringify({ role: newRole }) });
                     u.role = newRole;
                     renderMemberList(list);
                   } catch (err) { toast(err.message); }
                 },
-              }, [isHost ? 'Make attendee' : 'Make host'])] : []),
+              }, [isAdmin ? 'Make attendee' : 'Make admin'])] : []),
             ]),
           ])
         );
