@@ -467,7 +467,7 @@ async function renderEventDetail(id) {
   const rosterCard = el('div', { class: 'card' });
   renderRosterCard(rosterCard, signups);
 
-  const isHost = user && user.id === event.hostId;
+  const isHost = user && user.role === 'host';
   const hostCard = isHost && event.status !== 'cancelled'
     ? el('div', { class: 'card' }, [
         el('h3', {}, ['Manage game']),
