@@ -234,6 +234,7 @@ button, input, select { font-family: inherit; }
 .badge--full { background: var(--amber-bg); color: var(--amber); }
 .badge--admin { background: #eef0f4; color: var(--ink-soft); }
 .badge--cancelled { background: var(--rust-bg); color: var(--rust); }
+.badge--game-host { background: #dbeafe; color: #1d4ed8; font-size: 10px; padding: 2px 7px; }
 
 /* ---- Buttons -------------------------------------------------------- */
 .btn {
@@ -388,6 +389,21 @@ label input:focus, label select:focus { outline: 2px solid var(--signal); outlin
   padding: 8px 10px; border-radius: 8px; display: none;
 }
 #new-map { height: 180px; border-radius: 8px; margin-top: 10px; display: none; border: 1px solid var(--line); }
+.hosts-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+.hosts-field-label { font-size: 13px; font-weight: 600; color: var(--ink); }
+.host-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.host-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #dbeafe; color: #1d4ed8;
+  border-radius: 999px; padding: 4px 10px;
+  font-size: 13px; font-weight: 500;
+}
+.host-chip-remove {
+  background: none; border: none; cursor: pointer;
+  color: #1d4ed8; font-size: 15px; line-height: 1; padding: 0;
+}
+.host-chip-remove:hover { color: #1e3a8a; }
+.add-host-btn { align-self: flex-start; padding: 6px 12px; font-size: 13px; }
 
 /* ---- Modal ---------------------------------------------------------- */
 .modal-backdrop {

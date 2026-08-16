@@ -257,6 +257,63 @@ function renderCreateEvent() {
     }, [p.short]));
   });
 
+  const selectedHosts = [];
+  let allMembers = null;
+
+  const hostChipsEl = el('div', { class: 'host-chips' });
+  const hostDropdown = el('ul', { class: 'place-results hidden', id: 'f-hosts-dropdown' });
+
+  function refreshHostChips() {
+    hostChipsEl.innerHTML = '';
+    selectedHosts.forEach(h => {
+      hostChipsEl.appendChild(el('span', { class: 'host-chip' }, [
+        h.name,
+        el('button', { type: 'button', class: 'host-chip-remove', onclick: () => {
+          const i = selectedHosts.findIndex(x => x.id === h.id);
+          if (i !== -1) selectedHosts.splice(i, 1);
+          refreshHostChips();
+        }}, ['×']),
+      ]));
+    });
+  }
+
+  const addHostBtn = el('button', { type: 'button', class: 'btn btn--ghost add-host-btn' }, ['+ Add host']);
+
+  addHostBtn.addEventListener('click', async () => {
+    if (!allMembers) {
+      try { const { users } = await api('/api/users'); allMembers = users; }
+      catch { toast('Could not load members'); return; }
+    }
+    hostDropdown.innerHTML = '';
+    const remaining = allMembers.filter(m => !selectedHosts.find(h => h.id === m.id));
+    if (!remaining.length) {
+      hostDropdown.appendChild(el('li', {}, ['All members added']));
+    } else {
+      remaining.forEach(m => {
+        hostDropdown.appendChild(el('li', { onclick: () => {
+          selectedHosts.push({ id: m.id, name: m.name });
+          hostDropdown.classList.add('hidden');
+          refreshHostChips();
+        }}, [m.name]));
+      });
+    }
+    hostDropdown.classList.toggle('hidden');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!document.body.contains(hostDropdown)) return;
+    if (!hostDropdown.classList.contains('hidden') && !hostDropdown.contains(e.target) && e.target !== addHostBtn) {
+      hostDropdown.classList.add('hidden');
+    }
+  });
+
+  const hostsSection = el('div', { class: 'hosts-field' }, [
+    el('span', { class: 'hosts-field-label' }, ['Add hosts']),
+    hostChipsEl,
+    addHostBtn,
+    hostDropdown,
+  ]);
+
   const form = el('form', { id: 'create-form' }, [
     el('label', {}, ['Title', el('input', { type: 'text', id: 'f-title', required: 'true', placeholder: 'Sunday morning trail run' })]),
     el('div', { class: 'field-row' }, [
@@ -267,6 +324,7 @@ function renderCreateEvent() {
       'Attendees',
       el('input', { type: 'number', id: 'f-capacity', min: '1', value: '20', required: 'true' }),
     ]),
+    hostsSection,
     el('label', {}, [
       'Place',
       presetsDiv,
@@ -407,6 +465,7 @@ function renderCreateEvent() {
           lng: picked.lng,
           question: $('#f-question').value.trim() || null,
           image: imageData,
+          hostUserIds: selectedHosts.map(h => h.id),
         }),
       });
       toast('Game created!');
@@ -625,9 +684,11 @@ async function renderEventDetail(id) {
         const avatar = s.userPicture
           ? el('img', { class: 'roster-avatar', src: s.userPicture, alt: s.userName })
           : el('div', { class: 'roster-avatar roster-avatar--placeholder' }, [(s.userName || '?')[0].toUpperCase()]);
+        const nameEl = el('span', { class: 'roster-name' }, [avatar, s.userName]);
+        if (s.isGameHost) nameEl.appendChild(el('span', { class: 'badge badge--game-host' }, ['host']));
         list.appendChild(
           el('li', {}, [
-            el('span', { class: 'roster-name' }, [avatar, s.userName]),
+            nameEl,
             el('span', { class: 'n' }, [active === 'attending' || active === 'waitlisted' ? `#${i + 1}` : '']),
           ])
         );

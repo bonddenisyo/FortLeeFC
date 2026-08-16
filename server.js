@@ -66,9 +66,12 @@ app.post(
     const hostId = req.header('x-user-id');
     const host = hostId ? await db.getUser(hostId) : null;
     if (!host || host.role !== 'admin') throw httpError(403, 'Only admins can create events');
-    const { title, date, time, placeName, lat, lng, capacity, question, image } = req.body;
+    const { title, date, time, placeName, lat, lng, capacity, question, image, hostUserIds } = req.body;
     if (!title || !date || !time || !placeName) throw httpError(400, 'title, date, time and placeName are required');
     const event = await db.createEvent({ title, date, time, placeName, lat, lng, capacity, question, image, hostId: host.id });
+    if (Array.isArray(hostUserIds) && hostUserIds.length) {
+      await db.addGameHosts(event.id, hostUserIds);
+    }
     res.status(201).json({ event });
   })
 );
