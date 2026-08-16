@@ -82,35 +82,39 @@ app.get(
   '/api/weather',
   asyncRoute(async (req, res) => {
     const { lat, lng, date, time } = req.query;
-    const apiKey = process.env.OPENWEATHER_API_KEY;
-    if (!apiKey) return res.json({ available: false, reason: 'not_configured' });
+    if (!lat || !lng || !date || !time) throw httpError(400, 'lat, lng, date and time are required');
 
-    const eventMs = new Date(`${date}T${time}`).getTime();
-    const nowMs = Date.now();
-    const diffMs = eventMs - nowMs;
+    const gameHour = parseInt(time.split(':')[0], 10);
+    const targetHours = [-2, -1, 0, 1, 2]
+      .map(o => gameHour + o)
+      .filter(h => h >= 0 && h <= 23);
 
-    if (diffMs < -3 * 60 * 60 * 1000) return res.json({ available: false, reason: 'past' });
-    if (diffMs > 5 * 24 * 60 * 60 * 1000) return res.json({ available: false, reason: 'too_far' });
+    const url =
+      `https://api.open-meteo.com/v1/forecast` +
+      `?latitude=${lat}&longitude=${lng}` +
+      `&start_date=${date}&end_date=${date}` +
+      `&hourly=temperature_2m,precipitation_probability,weathercode,windspeed_10m` +
+      `&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=America%2FNew_York`;
 
-    const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${apiKey}&units=imperial&cnt=40`;
     const r = await fetch(url);
     if (!r.ok) throw httpError(502, 'Weather service unavailable');
     const data = await r.json();
 
-    const eventTs = Math.round(eventMs / 1000);
-    const closest = data.list.reduce((a, b) =>
-      Math.abs(b.dt - eventTs) < Math.abs(a.dt - eventTs) ? b : a
-    );
+    const times = data.hourly.time;
+    const hours = targetHours.map(h => {
+      const key = `${date}T${String(h).padStart(2, '0')}:00`;
+      const idx = times.indexOf(key);
+      if (idx === -1) return null;
+      return {
+        hour: h,
+        temp: Math.round(data.hourly.temperature_2m[idx]),
+        precip: data.hourly.precipitation_probability[idx] ?? 0,
+        code: data.hourly.weathercode[idx],
+        wind: Math.round(data.hourly.windspeed_10m[idx]),
+      };
+    }).filter(Boolean);
 
-    res.json({
-      available: true,
-      temp: Math.round(closest.main.temp),
-      feelsLike: Math.round(closest.main.feels_like),
-      description: closest.weather[0].description,
-      icon: closest.weather[0].icon,
-      humidity: closest.main.humidity,
-      wind: Math.round(closest.wind.speed),
-    });
+    res.json({ available: true, gameHour, hours });
   })
 );
 

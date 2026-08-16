@@ -325,7 +325,7 @@ button, input, select { font-family: inherit; }
   border-bottom: 1px dashed var(--line);
 }
 .roster li:last-child { border-bottom: none; }
-.roster .n { color: var(--ink-soft); font-family: var(--font-mono); font-size: 12px; }
+.roster .n { color: var(--ink-soft); font-size: 12px; }
 .roster-empty { color: var(--ink-soft); font-size: 13px; font-style: italic; }
 .roster-name { display: flex; align-items: center; gap: 8px; }
 .roster-avatar {
@@ -667,14 +667,14 @@ label input:focus, label select:focus { outline: 2px solid var(--signal); outlin
 /* ---- Weather widget -------------------------------------------------- */
 .weather-loading { font-size: 13px; color: var(--ink-soft); margin: 0; }
 .weather-note    { font-size: 13px; color: var(--ink-soft); margin: 0; }
-.weather-data {
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+.weather-timeline { display: flex; width: 100%; margin-top: 6px; gap: 2px; }
+.weather-hour {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 4px; padding: 10px 4px; text-align: center; border-radius: 8px;
 }
-.weather-icon { width: 56px; height: 56px; }
-.weather-main { display: flex; flex-direction: column; gap: 2px; }
-.weather-temp { font-size: 26px; font-weight: 700; color: var(--ink); line-height: 1; }
-.weather-desc { font-size: 13px; color: var(--ink-soft); }
-.weather-details {
-  display: flex; gap: 14px; font-size: 13px; color: var(--ink-soft);
-  width: 100%; flex-wrap: wrap; margin-top: 4px;
-}
+.weather-hour--game { background: var(--amber-bg); }
+.weather-hour__time   { font-size: 11px; font-weight: 600; color: var(--ink-soft); }
+.weather-hour__icon   { font-size: 20px; line-height: 1; }
+.weather-hour__temp   { font-size: 14px; font-weight: 700; color: var(--ink); }
+.weather-hour__precip { font-size: 11px; color: var(--ink-soft); }
+.weather-hour__wind   { font-size: 11px; color: var(--ink-soft); }

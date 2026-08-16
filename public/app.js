@@ -593,29 +593,43 @@ async function renderEventDetail(id) {
     api(`/api/weather?${params}`).then(w => {
       weatherCard.innerHTML = '';
       weatherCard.appendChild(el('h3', {}, ['Weather forecast']));
-      if (!w.available) {
-        if (w.reason === 'not_configured') { weatherCard.remove(); return; }
-        const msg = w.reason === 'too_far' ? 'Forecast is available within 5 days of the game.'
-          : w.reason === 'past'            ? 'This game has already taken place.'
-          :                                 'Weather forecast unavailable.';
-        weatherCard.appendChild(el('p', { class: 'weather-note' }, [msg]));
-      } else {
-        const desc = w.description[0].toUpperCase() + w.description.slice(1);
-        weatherCard.appendChild(
-          el('div', { class: 'weather-data' }, [
-            el('img', { class: 'weather-icon', src: `https://openweathermap.org/img/wn/${w.icon}@2x.png`, alt: desc }),
-            el('div', { class: 'weather-main' }, [
-              el('span', { class: 'weather-temp' }, [`${w.temp}°F`]),
-              el('span', { class: 'weather-desc' }, [desc]),
-            ]),
-            el('div', { class: 'weather-details' }, [
-              el('span', {}, [`Feels like ${w.feelsLike}°F`]),
-              el('span', {}, [`💧 ${w.humidity}%`]),
-              el('span', {}, [`💨 ${w.wind} mph`]),
-            ]),
+      if (!w.available || !w.hours.length) {
+        weatherCard.appendChild(el('p', { class: 'weather-note' }, ['Forecast unavailable for this date.']));
+        return;
+      }
+
+      function codeToEmoji(code) {
+        if (code === 0)  return '☀️';
+        if (code <= 3)   return '⛅';
+        if (code <= 48)  return '🌫️';
+        if (code <= 55)  return '🌦️';
+        if (code <= 67)  return '🌧️';
+        if (code <= 77)  return '❄️';
+        if (code <= 82)  return '🌧️';
+        return '⛈️';
+      }
+
+      function fmtHour(h) {
+        if (h === 0)   return '12AM';
+        if (h < 12)    return `${h}AM`;
+        if (h === 12)  return '12PM';
+        return `${h - 12}PM`;
+      }
+
+      const timeline = el('div', { class: 'weather-timeline' });
+      w.hours.forEach(h => {
+        const isGame = h.hour === w.gameHour;
+        timeline.appendChild(
+          el('div', { class: `weather-hour${isGame ? ' weather-hour--game' : ''}` }, [
+            el('div', { class: 'weather-hour__time' }, [fmtHour(h.hour) + (isGame ? ' ⚽' : '')]),
+            el('div', { class: 'weather-hour__icon' }, [codeToEmoji(h.code)]),
+            el('div', { class: 'weather-hour__temp' }, [`${h.temp}°`]),
+            el('div', { class: 'weather-hour__precip' }, [`💧 ${h.precip}%`]),
+            el('div', { class: 'weather-hour__wind' }, [`💨 ${h.wind}mph`]),
           ])
         );
-      }
+      });
+      weatherCard.appendChild(timeline);
     }).catch(() => {
       weatherCard.innerHTML = '';
       weatherCard.appendChild(el('h3', {}, ['Weather forecast']));
@@ -729,7 +743,7 @@ async function renderEventDetail(id) {
         list.appendChild(
           el('li', {}, [
             nameEl,
-            el('span', { class: 'n' }, [active === 'attending' || active === 'waitlisted' ? `#${i + 1}` : '']),
+            el('span', { class: 'n' }, [event.question ? (s.questionAnswer || '') : '']),
           ])
         );
       });
