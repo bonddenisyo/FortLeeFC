@@ -392,13 +392,13 @@ function renderCreateEvent() {
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const MAX = 800;
+        const MAX = 1600;
         const scale = Math.min(MAX / img.width, MAX / img.height, 1);
         const canvas = document.createElement('canvas');
         canvas.width = Math.round(img.width * scale);
         canvas.height = Math.round(img.height * scale);
         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        imageData = canvas.toDataURL('image/jpeg', 0.72);
+        imageData = canvas.toDataURL('image/jpeg', 0.92);
         imgPreviewEl.src = imageData;
         imgPreviewEl.style.display = 'block';
         imgPlaceholderEl.style.display = 'none';
@@ -904,13 +904,13 @@ async function renderUserProfile() {
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const MAX = 400;
+        const MAX = 1600;
         const scale = Math.min(MAX / img.width, MAX / img.height, 1);
         const canvas = document.createElement('canvas');
         canvas.width = Math.round(img.width * scale);
         canvas.height = Math.round(img.height * scale);
         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        pictureData = canvas.toDataURL('image/jpeg', 0.82);
+        pictureData = canvas.toDataURL('image/jpeg', 0.92);
         avatarImg.src = pictureData;
         avatarImg.style.display = '';
         avatarPlaceholder.style.display = 'none';
