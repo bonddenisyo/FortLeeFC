@@ -47,7 +47,7 @@ button, input, select { font-family: inherit; }
 .topbar__inner {
   max-width: 980px;
   margin: 0 auto;
-  padding: 14px 20px;
+  padding: 18px 20px;
   display: flex;
   align-items: center;
   gap: 24px;
@@ -55,16 +55,16 @@ button, input, select { font-family: inherit; }
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   text-decoration: none;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 20px;
+  font-size: 22px;
   color: var(--ink);
 }
 .brand__mark {
-  width: 36px;
-  height: 36px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
