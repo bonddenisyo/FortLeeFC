@@ -142,6 +142,39 @@ app.patch(
   })
 );
 
+// ---- Comments ------------------------------------------------------------
+
+app.get(
+  '/api/events/:id/comments',
+  asyncRoute(async (req, res) => {
+    res.json({ comments: await db.listComments(req.params.id) });
+  })
+);
+
+app.post(
+  '/api/events/:id/comments',
+  asyncRoute(async (req, res) => {
+    const userId = req.header('x-user-id');
+    const user = userId ? await db.getUser(userId) : null;
+    if (!user) throw httpError(401, 'Sign in first');
+    const { body } = req.body;
+    if (!body || !body.trim()) throw httpError(400, 'Comment cannot be empty');
+    const comment = await db.addComment(req.params.id, user.id, body.trim());
+    res.status(201).json({ comment });
+  })
+);
+
+app.delete(
+  '/api/comments/:id',
+  asyncRoute(async (req, res) => {
+    const userId = req.header('x-user-id');
+    const user = userId ? await db.getUser(userId) : null;
+    if (!user || user.role !== 'admin') throw httpError(403, 'Admins only');
+    await db.deleteComment(req.params.id);
+    res.json({ ok: true });
+  })
+);
+
 // ---- Profile -------------------------------------------------------------
 
 app.get(
@@ -222,6 +255,16 @@ app.use((err, req, res, next) => {
 // ---- Boot (wait for DB schema before accepting requests) ------------------
 
 const PORT = process.env.PORT || 3000;
+
+function scheduleCleanup() {
+  const run = () => db.cleanupOldEvents().catch(err => console.error('Cleanup error:', err));
+  run();
+  setInterval(run, 14 * 24 * 60 * 60 * 1000);
+}
+
 db.init()
-  .then(() => app.listen(PORT, () => console.log(`Fort Lee FC running at http://localhost:${PORT}`)))
+  .then(() => {
+    scheduleCleanup();
+    app.listen(PORT, () => console.log(`Fort Lee FC running at http://localhost:${PORT}`));
+  })
   .catch((err) => { console.error('DB init failed:', err); process.exit(1); });

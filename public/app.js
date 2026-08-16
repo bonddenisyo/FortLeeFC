@@ -13,6 +13,36 @@ const el = (tag, props = {}, children = []) => {
   return node;
 };
 
+// ---- Lightbox ------------------------------------------------------------
+
+const lightbox = (() => {
+  const backdrop = el('div', { class: 'lightbox-backdrop' });
+  const img = el('img', { class: 'lightbox-img' });
+  const closeBtn = el('button', { class: 'lightbox-close', 'aria-label': 'Close' }, ['×']);
+  backdrop.appendChild(img);
+  backdrop.appendChild(closeBtn);
+  document.addEventListener('DOMContentLoaded', () => document.body.appendChild(backdrop));
+
+  function close() { backdrop.classList.remove('lightbox--open'); }
+  closeBtn.addEventListener('click', close);
+  backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+
+  return {
+    open(src, alt = '') {
+      img.src = src;
+      img.alt = alt;
+      backdrop.classList.add('lightbox--open');
+    },
+  };
+})();
+
+function avatarEl(src, name) {
+  const img = el('img', { class: 'roster-avatar roster-avatar--zoomable', src, alt: name });
+  img.addEventListener('click', () => lightbox.open(src, name));
+  return img;
+}
+
 // ---- Session (stored client-side; sent as x-user-id header) -------------
 
 const Session = {
@@ -549,7 +579,81 @@ async function renderEventDetail(id) {
       ])
     : null;
 
-  const left = el('div', {}, [mapCard, weatherCard]);
+  const commentsCard = el('div', { class: 'card' });
+
+  function timeAgo(ts) {
+    const diff = Date.now() - ts;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 30) return `${days}d ago`;
+    return new Date(ts).toLocaleDateString();
+  }
+
+  async function loadComments() {
+    const { comments } = await api(`/api/events/${event.id}/comments`);
+    commentsCard.innerHTML = '';
+    commentsCard.appendChild(el('h3', {}, ['Comments']));
+
+    if (comments.length) {
+      const list = el('div', { class: 'comments-list' });
+      comments.forEach(c => {
+        const avatar = c.userPicture
+          ? avatarEl(c.userPicture, c.userName)
+          : el('div', { class: 'roster-avatar roster-avatar--placeholder' }, [(c.userName || '?')[0].toUpperCase()]);
+        list.appendChild(
+          el('div', { class: 'comment' }, [
+            el('div', { class: 'comment__header' }, [
+              avatar,
+              el('div', { class: 'comment__meta' }, [
+                el('span', { class: 'comment__name' }, [c.userName]),
+                el('span', { class: 'comment__time' }, [timeAgo(c.createdAt)]),
+              ]),
+              ...(user && user.role === 'admin' ? [el('button', {
+                class: 'comment__delete',
+                title: 'Delete comment',
+                onclick: async () => {
+                  try { await api(`/api/comments/${c.id}`, { method: 'DELETE' }); await loadComments(); }
+                  catch (err) { toast(err.message); }
+                },
+              }, ['×'])] : []),
+            ]),
+            el('p', { class: 'comment__body' }, [c.body]),
+          ])
+        );
+      });
+      commentsCard.appendChild(list);
+    } else {
+      commentsCard.appendChild(el('p', { class: 'comment__empty' }, ['No comments yet.']));
+    }
+
+    if (user) {
+      const textarea = el('textarea', { class: 'comment-input', placeholder: 'Add a comment…', rows: '2' });
+      const postBtn = el('button', { class: 'btn btn--primary comment-post-btn' }, ['Post']);
+      postBtn.addEventListener('click', async () => {
+        const body = textarea.value.trim();
+        if (!body) return;
+        postBtn.disabled = true;
+        try {
+          await api(`/api/events/${event.id}/comments`, { method: 'POST', body: JSON.stringify({ body }) });
+          textarea.value = '';
+          await loadComments();
+        } catch (err) { toast(err.message); }
+        finally { postBtn.disabled = false; }
+      });
+      textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) postBtn.click();
+      });
+      commentsCard.appendChild(el('div', { class: 'comment-form' }, [textarea, postBtn]));
+    }
+  }
+
+  loadComments();
+
+  const left = el('div', {}, [mapCard, weatherCard, commentsCard]);
   const right = el('div', {}, [...(hostCard ? [hostCard] : []), actionCard, rosterCard]);
 
   app.appendChild(head);
@@ -736,7 +840,7 @@ async function renderEventDetail(id) {
       const list = el('ul', { class: 'roster' });
       rows.forEach((s, i) => {
         const avatar = s.userPicture
-          ? el('img', { class: 'roster-avatar', src: s.userPicture, alt: s.userName })
+          ? avatarEl(s.userPicture, s.userName)
           : el('div', { class: 'roster-avatar roster-avatar--placeholder' }, [(s.userName || '?')[0].toUpperCase()]);
         const nameEl = el('span', { class: 'roster-name' }, [avatar, s.userName]);
         if (s.isGameHost) nameEl.appendChild(el('span', { class: 'badge badge--game-host' }, ['host']));
@@ -1044,3 +1148,15 @@ async function refreshSession() {
 
 renderIdentity();
 refreshSession().then(() => router());
+
+// Wire logo lightbox after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  const logoImg = document.querySelector('.brand__mark');
+  if (logoImg) {
+    logoImg.style.cursor = 'zoom-in';
+    logoImg.addEventListener('click', (e) => {
+      e.preventDefault();
+      lightbox.open(logoImg.src, logoImg.alt);
+    });
+  }
+});

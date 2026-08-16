@@ -678,3 +678,47 @@ label input:focus, label select:focus { outline: 2px solid var(--signal); outlin
 .weather-hour__temp   { font-size: 14px; font-weight: 700; color: var(--ink); }
 .weather-hour__precip { font-size: 11px; color: var(--ink-soft); }
 .weather-hour__wind   { font-size: 11px; color: var(--ink-soft); }
+
+/* ---- Comments -------------------------------------------------------- */
+.comments-list { display: flex; flex-direction: column; gap: 14px; margin: 10px 0 14px; }
+.comment__header { display: flex; align-items: center; gap: 8px; }
+.comment__meta { display: flex; flex-direction: column; flex: 1; line-height: 1.3; }
+.comment__name { font-size: 13px; font-weight: 600; color: var(--ink); }
+.comment__time { font-size: 11px; color: var(--ink-soft); }
+.comment__delete {
+  background: none; border: none; cursor: pointer;
+  color: var(--ink-soft); font-size: 18px; line-height: 1; padding: 0 2px;
+}
+.comment__delete:hover { color: var(--rust); }
+.comment__body { font-size: 14px; color: var(--ink); margin: 5px 0 0 40px; line-height: 1.5; }
+.comment__empty { font-size: 13px; color: var(--ink-soft); margin: 8px 0 12px; }
+.comment-form { display: flex; flex-direction: column; gap: 8px; }
+.comment-input {
+  width: 100%; box-sizing: border-box;
+  border: 1px solid var(--line); border-radius: 8px;
+  padding: 8px 10px; font-size: 14px; font-family: inherit;
+  resize: vertical; min-height: 62px; color: var(--ink);
+}
+.comment-input:focus { outline: none; border-color: var(--signal); }
+.comment-post-btn { align-self: flex-end; padding: 8px 20px; }
+
+/* ---- Lightbox -------------------------------------------------------- */
+.lightbox-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.82);
+  align-items: center; justify-content: center;
+}
+.lightbox--open { display: flex; }
+.lightbox-img {
+  max-width: 90vw; max-height: 90vh;
+  border-radius: 10px; object-fit: contain;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+.lightbox-close {
+  position: fixed; top: 18px; right: 22px;
+  background: rgba(255,255,255,0.15); border: none; border-radius: 50%;
+  color: #fff; font-size: 26px; line-height: 1; width: 40px; height: 40px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.3); }
+.roster-avatar--zoomable { cursor: zoom-in; }
