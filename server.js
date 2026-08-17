@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const db = require('./lib/db');
+const { sendGameCreatedEmail } = require('./lib/email');
 
 const app = express();
 app.use(express.json({ limit: '15mb' }));
@@ -73,6 +74,9 @@ app.post(
       await db.addGameHosts(event.id, hostUserIds);
     }
     res.status(201).json({ event });
+    db.listUserEmails()
+      .then(emails => sendGameCreatedEmail(event, emails))
+      .catch(err => console.error('Email notification error:', err));
   })
 );
 

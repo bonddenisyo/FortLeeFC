@@ -1072,7 +1072,6 @@ function renderLogin() {
       });
       Session.set(user);
       location.hash = '#/events';
-      router();
     } catch (err) { toast(err.message); }
   });
 
@@ -1125,7 +1124,6 @@ function renderRegister() {
       });
       Session.set(user);
       location.hash = '#/events';
-      router();
     } catch (err) { toast(err.message); }
   });
 
